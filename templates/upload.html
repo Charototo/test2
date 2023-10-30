@@ -1,13 +1,68 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
-    <title>肺炎检测</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pneumonia Detection</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+            background-color: #f7f7f9;
+            color: #333;
+        }
+        form {
+            display: inline-block;
+        }
+        #uploadPreview {
+            width: 300px;
+            height: 300px;
+            border: 1px solid black;
+            margin-top: 20px;
+        }
+        input[type="submit"] {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            text-decoration: none;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 8px;
+        }
+        .imperial {
+            font-family: 'Arial', sans-serif;  /* 该字体只是为了示例，您可能需要找到更接近图片中的字体 */
+            color: #004D8A;                    /* 这是一个近似的蓝色，您可能需要调整以更精确地匹配图片中的颜色 */
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
-    <h2>上传图像进行肺炎检测</h2>
+    <h2>Upload Image for Pneumonia Detection</h2>
     <form action="/" method="post" enctype="multipart/form-data">
-        <input type="file" name="file">
-        <input type="submit" value="上传并检测">
+        <input type="file" name="file" id="fileInput" onchange="previewImage(this)">
+        <br>
+        <img id="uploadPreview" src="#" alt="Uploaded Image Preview" style="display:none;">
+        <br>
+        <input type="submit" value="Upload and Detect" style="margin-top:20px;">
     </form>
+
+    <!-- 这是添加的您的信息 -->
+    <p style="margin-top:30px;">Jason Zhao, <span class="imperial">Imperial College London</span></p>
+
+    <script>
+        function previewImage(input) {
+            var preview = document.getElementById('uploadPreview');
+            var reader  = new FileReader();
+
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+                preview.style.display = "block";
+            }
+
+            reader.readAsDataURL(input.files[0]);
+        }
+    </script>
 </body>
 </html>

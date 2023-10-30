@@ -1,25 +1,12 @@
-# 导入临时文件模块
-import tempfile
-
-# 导入必要的Flask模块
+# 导入必要的模块
 from flask import Flask, request, render_template
-
-# 用于加载模型和处理图像
 import tensorflow as tf
-
-# 用于数值计算
 import numpy as np
-
-# 用于处理上传的文件内容为字节流
 import io
-
-# 导入os模块
 import os
-
-# 导入Keras相关的图像处理函数
 from keras.preprocessing.image import ImageDataGenerator, img_to_array, load_img
 
-# 定义数据增强生成器
+# Define data augmentation generator
 image_generator = ImageDataGenerator(
     rotation_range=20,
     width_shift_range=0.1,
@@ -29,54 +16,58 @@ image_generator = ImageDataGenerator(
     samplewise_std_normalization=True
 )
 
-# 创建一个新的Flask web应用实例
+# Instantiate a new Flask web application
 app = Flask(__name__)
 
-# 使用TensorFlow的load_model方法从指定路径加载预训练的模型
+# Load a pre-trained deep convolutional neural network model using TensorFlow's load_model method
 model = tf.keras.models.load_model("D:\Coding\GCPapp\my_model.keras")
 
 
-# 定义路由
+# Define the route
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    # 检查当前的请求是否为POST方法
+    # Check if the current request is POST method
     if request.method == 'POST':
-        # 从请求中获取名为'file'的上传文件
+        # Retrieve the uploaded file from the request named 'file'
         file = request.files['file']
 
-        # 检查文件是否存在
+        # Check if the file exists
         if file:
-            # 读取文件内容，并转换为BytesIO对象
+            # Read the file content and convert it to a BytesIO object
             bytes_io = io.BytesIO(file.read())
 
-            # 使用TensorFlow的load_img函数，从BytesIO对象中加载图片，并将其大小调整为224x224
+            # Load the image from BytesIO object and resize it to 180x180 using TensorFlow's load_img function
             image = tf.keras.preprocessing.image.load_img(bytes_io, target_size=(180, 180))
 
-            # 将图片对象转换为numpy数组
+            # Convert the image object to a numpy array
             data = tf.keras.preprocessing.image.img_to_array(image)
 
-            # 扩展维度，使其成为一个4D数组，因为ImageDataGenerator.flow()需要batch形式的数据
+            # Expand the dimensions to make it a 4D array as ImageDataGenerator.flow() requires batch-like data
             data = np.expand_dims(data, axis=0)
 
-            # 使用定义的image_generator对图片进行数据增强
+            # Perform data augmentation on the image using the defined image_generator
             ig = image_generator.flow(data)
 
-            # 使用加载的模型对输入的图片进行预测
+            # Predict the results using the loaded model
             predictions = model.predict(ig[0])
 
-            if predictions[0][0] <= 0.7:
-                return f'预测结果: 无肺炎, 预测值: {predictions[0][0]}'
-            else:
-                return f'预测结果: 肺炎，预测值：{predictions[0][0]}'
+            result_70 = "Non-Pneumonia" if predictions[0][0] <= 0.7 else "Pneumonia"
+            result_50 = "Non-Pneumonia" if predictions[0][0] <= 0.5 else "Pneumonia"
 
-        # 如果没有文件被上传或文件不符合要求，则返回一个错误消息
+            return f'''
+            <div style="font-size:24px; color:blue; text-align:center; margin-top:200px;">
+                <p>Threshold 0.7 Prediction: {result_70}, Confidence Score: {predictions[0][0]}</p>
+                <p>Threshold 0.5 Prediction: {result_50}, Confidence Score: {predictions[0][0]}</p>
+            </div>
+            '''
         else:
-            return '无效的文件格式'
+            # Return an error message if no file is uploaded or the file is invalid
+            return '<div style="font-size:24px; color:red; text-align:center; margin-top:200px;">Invalid file format</div>'
 
-            # 对于GET请求，服务器将渲染并返回upload.html模板
+    # Render and return the upload.html template for GET requests
     return render_template('upload.html')
 
 
-# 如果这个脚本是直接运行的，则启动Flask应用
+# Run the Flask application if the script is executed directly
 if __name__ == '__main__':
-    app.run(debug=True)  
+    app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
